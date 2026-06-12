@@ -1,0 +1,7 @@
+.venv/
+stablewm_home/
+__pycache__/
+*.pyc
+outputs/
+wandb/
+*Zone.Identifier
