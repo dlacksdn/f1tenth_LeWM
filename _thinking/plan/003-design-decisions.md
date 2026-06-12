@@ -7,6 +7,28 @@
 
 ---
 
+## 배경 (이 문서만 읽어도 되도록 요약)
+
+**프로젝트**: f1tenth 자율주행 시뮬레이터에서 LeWM(LeWorldModel — JEPA 계열 world model,
+이미지+action 시퀀스로 latent dynamics를 학습하고 MPC로 planning하는 모델, 공식 코드
+`~/le-wm`)을 offline 학습시켜 주행까지 시키는 개인 프로젝트. 데이터는 직전 DreamerV3
+프로젝트(`~/f1tenth_RL_project`)에서 학습해둔 policy들로 rollout해서 만든다.
+
+**지금까지 확인된 핵심 사실** (상세는 각 문서):
+- LeWM 입력 = (224×224 RGB 이미지, action) 시퀀스의 HDF5 파일. 우리 f1tenth 관측은 lidar
+  벡터라 **이미지를 새로 만들어야 함** → 맵+차량위치(pose)로 위에서 내려다본(top-down)
+  이미지를 합성하는 방식이 프로토타입으로 검증됨 (implementation/001 §5)
+- 공식 코드는 smoke test 통과 (공식 tworoom 데이터셋으로 학습 파이프라인 작동 확인)
+- 데이터 파일 규약(스키마), 로더의 윈도우 생성 방식, planning 시 정규화 경로까지 소스 레벨로
+  분석 완료 (analysis/002)
+- 모델 크기는 정본 그대로 유지(18M, 줄이면 성능 급락하는 ablation 있음 — analysis/001)
+
+**이 문서의 역할**: 구현(Phase 3) 전에 정해야 하는 설계 결정 4개 — ①관측 이미지를 어떻게
+만들지 ②데이터셋을 어떻게 구성할지 ③학습된 모델을 어떻게 평가할지 ④시간 해상도를 어떻게
+잡을지 — 를 근거와 함께 확정 제안한다.
+
+---
+
 ## 0. 목표 재확인
 
 f1tenth 시뮬레이터에서 (이미지, action) offline 데이터셋을 만들어 **정본 LeWM을 무수정으로
@@ -34,7 +56,10 @@ f1tenth 시뮬레이터에서 (이미지, action) offline 데이터셋을 만들
 - **게이트**: Phase 3-1 첫 에피소드 렌더를 눈으로 검증(연속 프레임 일관성, 회전 방향 정합)
   후 본 수집
 
-### 기각 사유 기록: (b)는 critic M-4의 연쇄 수정 비용이 스파이크 성공으로 정당화 불가능해짐
+### 기각 사유 기록
+(b)안(LeWM encoder를 lidar 1D용으로 교체)은 단순 인코더 교체가 아니라 train/eval/swm
+파이프라인 전반의 연쇄 수정임이 코드 분석으로 확인됐다(plan/001 검토 의견 M-4 = 위 표의
+"정본 수정" 행). 렌더 프로토타입이 성공한 이상 이 비용을 감수할 이유가 없다.
 
 ---
 
@@ -140,3 +165,13 @@ f1tenth 시뮬레이터에서 (이미지, action) offline 데이터셋을 만들
 3. M1 판정 거리 1.0m의 적정성 (트랙 폭 대비)
 4. 에피소드 400 step 고정 vs 가변(충돌 시 조기 종료 허용) — 분포 영향
 5. 레퍼런스 lap 1개 의존 — subgoal 체인이 단일 주행선에 과도하게 고정되는 위험
+
+## 다음 단계 (이 문서 이후의 진행 — 다른 세션 인수인계용)
+
+1. **critic 검토**: 이 설계서를 별도 세션에서 비판적으로 검토 (검토 결과는 plan/004로 저장
+   예정). 검토자는 위 "검토 요청 포인트" 5개 + 사실 검증(인용 file:line)을 다룬다
+2. **검토 반영 → 설계 확정** (필요시 plan/005 수정판)
+3. **Phase 3-1a부터 구현 시작**: 위 "Phase 3 작업 분해" 표 순서대로. 첫 작업 = py3.8
+   (f1tenth_RL_project/.venv)에서 policy snapshot 로드 + pose 병행 기록 rollout 파일럿 50 ep
+4. 실행 환경/커맨드/함정은 env_setting/004 참조 (STABLEWM_HOME, hdf5plugin 등)
+5. 모든 분기마다: _thinking에 문서(분석=analysis/, 구현=implementation/, 계획=plan/) + commit + push
