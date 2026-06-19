@@ -119,3 +119,51 @@ rendering(imageio/mujoco/video/d4rl)·colab·preprocessing·sequence guard + buf
 2. **P0 병행**(새 .venv): 글루 디커플 + 1-step + 파서. 훈련과 독립.
 3. **교수님 확인**(비블로킹): expert(기존 best) 정성평가 포함 가능? 불허 시 expert tier 제거.
 4. 분기마다 _thinking 문서 + commit + push(상시 규약, 자율 pull 금지). f1tenth 판단 시 [[003-project-spec]] + PDF.
+
+---
+
+## ★ 검수 반영 + 성공기준 재정의 (2026-06-19 밤, append — 적대적 critic 검수 후)
+
+> 적대적 critic(새 세션) 보고 + 내 1차소스 재검증(crash_data 직접 로드)으로 위 성공기준을 정정한다.
+> **008 본문(위)은 보존**, 본 절이 성공기준·reward·평가의 최신 SSOT. 아키텍처 이해는 [[understand/001-diffuser-vs-value-architecture]].
+
+### 검수 판정: critic (C)"설계상 실패" → 재검증 후 **(B)**
+- critic 주장(검증됨): 데이터 내 최속 *2랩 완주* = cap-10 **56.14s**, 37.3s보다 빠른 완주 **0/52**.
+  → 구 floor(cap-15 37.3s 초과)는 **2랩 완주 라벨이 데이터에 없는 영역**.
+- 내 재검증(반박 근거, 직접 실측 crash_data 767ep): **고속 *단일랩* 재료는 빽빽** — cap-20 117랩@18.04s,
+  cap-15 132랩@19.74s(2랩 환산 ~36–40s). 2랩 완주 0은 *고속 불가*가 아니라 stochastic 정책이 2랩 도는 중
+  충돌하기 때문. **obs는 lap-blind + 평가는 K=1 MPC**(매 step 재계획, policies.py:36 `action[0,0]`)라 모델은
+  2.56s 윈도만 이어붙이고 그 고속 윈도는 in-distribution. → floor는 *OOD 불가능*이 아니라 **불확실 stretch**.
+
+### ★ 성공기준 재정의 (위 "성능 기대치" 표 대체)
+| 수준 | 내용 | 데이터 지지 |
+|---|---|---|
+| **승리(확정 목표)** | **baseline(cap-5 107.16s) 초과** | cap-10 완주 56s가 이미 2× → BC로도 자명 |
+| **목표(realistic)** | **≈56s**(cap-10 완주 수준 복원) | 완주 52개 in-dist |
+| **stretch** | **≈36–40s**(stitching+value-shaping 베팅) | 고속 단일랩 249개 존재하나 충돌과 얽힘 → 불확실 |
+| ~~구 floor~~ | ~~cap-15 37.3s 초과~~ | **stretch로 강등**(2랩 완주 라벨 부재) |
+
+보고서 서사: "expert급 복원" ❌ → **"충돌-위주 데이터에서 안전 완주 복원 + stitching 탐색"**.
+
+### ★ 진짜 linchpin = value 설계 (critic D3)
+value는 speed를 보상(corr(speed,R)=+0.36)하고 **충돌은 γ=0.99로 소멸**(collision −10·lap +200 모두 discounted)
+→ "안전-고속"과 "충돌-고속"을 구분 못 함. stretch의 실제 리스크이자 **해결 레버**.
+- **v1 = 현 학습 유지**: diffusion + **npz 결합 reward** value([f1tenth.py:117]; npz에 log_reward_{progress,collision,
+  reverse,diverged,lap} 성분 분리 존재).
+- **D4 정정**: 위 D4의 "축소 collision −2~−3"은 **D3를 악화**(페널티↓ = value가 충돌 더 못 봄) → **npz −10 유지가
+  정답**. reward 재구성 안 함, 문서만 정정.
+- **D3 contingency**: v1 평가(P5/P6)서 value→충돌 징후 나오면 **value만 ~19h v2 재학습**(crash-aware:
+  collision 성분 강조 또는 짧은 discount). diffusion 재학습 불필요. (over-plan 금지 — 징후 확인 후.)
+
+### 기타 검수 항목
+- **D5(실버그) 수정완료**: `config/f1tenth.py` `plan.discount 0.997→0.99`. value는 d0.99로 저장되어
+  value_loadpath의 `{discount}`가 0.99여야 P5 eval 로드 성공. plan 블록=eval 전용이라 **학습 무영향**.
+- **S3**: 평가 **K=1**(매 step 재계획) 확정 — open-loop drift 없음, sim이라 latency 무관(lap=sim-time).
+- **S4**: P5에서 raw action → env `[-1,1]` 재정규화는 **V_MAX=20 고정**(per-tier 값 금지).
+- **S5**: 위 "코어 무변경"엔 ValueFunction fork-patch 1건 예외(원본 off-by-one 버그, 무회귀 검증).
+- **S1**(패딩 14%→정지 편향, min ep143≥H128이라 v2서 use_padding=False로 제거 가능)·**D2**(medium-expert
+  서사 정정)은 v2/문서 단계로 보류.
+
+### 측정 가능성 (P5 게이트 전제)
+discount 일치(D5 ✅) + normalizer 통계 pickle 고정 + raw↔`[-1,1]` V_MAX=20 왕복 + plan_f1tenth.py 구축
+후에야 floor/baseline 측정 가능. (현재 P4 학습 중, P5 미구현.)

@@ -137,7 +137,10 @@ base = {
         'n_diffusion_steps': 20,
 
         ## value function
-        'discount': 0.997,
+        ## D5 fix(검수): value는 values.discount=0.99로 저장(exp=...d0.99)되므로 value_loadpath의
+        ## {discount}가 0.99여야 P5 eval에서 로드됨(0.997이면 d0.997 폴더 못 찾아 로드 실패). plan
+        ## 블록은 eval 전용이라 실행 중 학습엔 무영향.
+        'discount': 0.99,
 
         ## loading
         'diffusion_loadpath': 'f:diffusion/f1tenth_H{horizon}_T{n_diffusion_steps}',
