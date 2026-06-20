@@ -56,9 +56,17 @@ base = {
         'learning_rate': 2e-4,
         'gradient_accumulate_every': 2,
         'ema_decay': 0.995,
-        'save_freq': 20000,
+        # ── 체크포인트 촘촘 저장(중단·날림 방지) ─────────────────────────────
+        # 핵심: 디스크 파일명 라벨 = step // label_freq * label_freq 이고
+        #   label_freq = n_train_steps // n_saves (train.py:84). 즉 save_freq만
+        #   줄이면 같은 라벨에 덮어써져 무의미하고, n_saves도 함께 맞춰야
+        #   별도 파일이 촘촘히 남는다. 규칙: n_saves = n_train_steps / save_freq
+        #   → label_freq == save_freq → state_2000, state_4000, … 각각 분리 저장.
+        #   (예: n_train_steps=40000 → 2000마다 20개 = 각 ~30MB = 600MB.)
+        #   n_train_steps를 40000 초과로 늘릴 땐 CLI에서 n_saves도 비례로 키울 것.
+        'save_freq': 2000,
         'sample_freq': 0,
-        'n_saves': 5,
+        'n_saves': 20,
         'save_parallel': False,
         'n_reference': 8,
         'bucket': None,
