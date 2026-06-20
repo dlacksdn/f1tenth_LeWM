@@ -1,0 +1,111 @@
+[ utils/colab ] Warning: not importing colab dependencies
+[ utils/setup ] Reading config: config.f1tenth:f1tenth
+[ utils/setup ] Not using overrides | config: config.f1tenth | dataset: f1tenth
+[ utils/setup ] Found extras: ['--prefix', 'diffusion/f1tenth_cap10', '--n_train_steps', '40000']
+[ utils/setup ] Overriding config | prefix : diffusion/f1tenth --> diffusion/f1tenth_cap10
+[ utils/setup ] Overriding config | n_train_steps : 1000000.0 --> 40000
+[ utils/setup ] Setting exp_name to: diffusion/f1tenth_cap10_H128_T20
+[ utils/setup ] Made savepath: logs/f1tenth/diffusion/f1tenth_cap10_H128_T20
+[ utils/setup ] Saved args to logs/f1tenth/diffusion/f1tenth_cap10_H128_T20/args.json
+[ utils/config ] Imported diffuser.datasets:F1tenthSequenceDataset
+
+[utils/config ] Config: <class 'diffuser.datasets.f1tenth.F1tenthSequenceDataset'>
+    env: f1tenth
+    horizon: 128
+    max_path_length: 5839
+    normalizer: SafeLimitsNormalizer
+    preprocess_fns: []
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap10_H128_T20/dataset_config.pkl
+
+[ utils/config ] Imported diffuser.utils:NullRenderer
+
+[utils/config ] Config: <class 'diffuser.utils.null_renderer.NullRenderer'>
+    env: f1tenth
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap10_H128_T20/render_config.pkl
+
+[ datasets/buffer ] Finalized replay buffer | 30 episodes
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (30, 5839, 133)
+    actions: (30, 5839, 2)
+    rewards: (30, 5839, 1)
+    terminals: (30, 5839, 1)
+    timeouts: (30, 5839, 1)
+    normed_observations: (30, 5839, 133)
+    normed_actions: (30, 5839, 2)
+[ utils/config ] Imported diffuser.models:TemporalUnet
+
+[utils/config ] Config: <class 'diffuser.models.temporal.TemporalUnet'>
+    attention: False
+    cond_dim: 133
+    dim_mults: (1, 4, 8)
+    horizon: 128
+    transition_dim: 135
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap10_H128_T20/model_config.pkl
+
+[ utils/config ] Imported diffuser.models:GaussianDiffusion
+
+[utils/config ] Config: <class 'diffuser.models.diffusion.GaussianDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: True
+    horizon: 128
+    loss_discount: 1
+    loss_type: l2
+    loss_weights: None
+    n_timesteps: 20
+    observation_dim: 133
+    predict_epsilon: False
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap10_H128_T20/diffusion_config.pkl
+
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    bucket: None
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    label_freq: 8000
+    n_reference: 8
+    results_folder: logs/f1tenth/diffusion/f1tenth_cap10_H128_T20
+    sample_freq: 0
+    save_freq: 20000
+    save_parallel: False
+    train_batch_size: 32
+    train_lr: 0.0002
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap10_H128_T20/trainer_config.pkl
+
+[ models/temporal ] Channel dimensions: [(135, 32), (32, 128), (128, 256)]
+[(135, 32), (32, 128), (128, 256)]
+[ utils/arrays ] Total parameters: 3.71 M
+         downs.2.0.blocks.1.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         downs.2.1.blocks.0.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         downs.2.1.blocks.1.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         ups.0.0.blocks.0.block.0.weight: 327.68 k | Conv1d(512, 128, kernel_size=(5,), stride=(1,), padding=(2,))
+         mid_block1.blocks.0.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         mid_block1.blocks.1.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         mid_block2.blocks.0.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         mid_block2.blocks.1.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         downs.2.0.blocks.0.block.0.weight: 163.84 k | Conv1d(128, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         downs.1.0.blocks.1.block.0.weight: 81.92 k | Conv1d(128, 128, kernel_size=(5,), stride=(1,), padding=(2,))
+         ... and 138 others accounting for 843.94 k parameters
+Testing forward... ✓
+Epoch 0 / 4 | logs/f1tenth/diffusion/f1tenth_cap10_H128_T20
+[ utils/training ] Saved model to logs/f1tenth/diffusion/f1tenth_cap10_H128_T20/state_0.pt
+0:   0.4132 | a0_loss:   0.0534 | t:   0.6758
+100:   0.1383 | a0_loss:   0.0354 | t:  35.2885
+200:   0.0536 | a0_loss:   0.0221 | t:  35.4678
+300:   0.0244 | a0_loss:   0.0252 | t:  35.0602
+400:   0.0166 | a0_loss:   0.0139 | t:  35.1376
+500:   0.0139 | a0_loss:   0.0202 | t:  34.7419
+600:   0.0129 | a0_loss:   0.0190 | t:  34.8453
+700:   0.0123 | a0_loss:   0.0157 | t:  34.9794
+800:   0.0151 | a0_loss:   0.0130 | t:  35.0267
+900:   0.0132 | a0_loss:   0.0119 | t:  34.7972
+1000:   0.0131 | a0_loss:   0.0094 | t:  34.5353
+1100:   0.0113 | a0_loss:   0.0111 | t:  34.9219

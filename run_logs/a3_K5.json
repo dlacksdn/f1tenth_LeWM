@@ -1,0 +1,104 @@
+{
+  "agg": {
+    "n": 10,
+    "n_completed": 0,
+    "completion_rate": 0.0,
+    "two_lap_best": null,
+    "two_lap_median": null,
+    "baseline_2lap": 107.16,
+    "beats_baseline": false
+  },
+  "episodes": [
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 159,
+      "cmd_speed_mean": 4.7531282017066045,
+      "cmd_speed_max": 7.455874443054199,
+      "cmd_speed_p90": 4.994050598144533,
+      "cmd_steer_absmean": 0.10664180567804372
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 163,
+      "cmd_speed_mean": 4.859661897998646,
+      "cmd_speed_max": 7.462669372558594,
+      "cmd_speed_p90": 5.276239204406739,
+      "cmd_steer_absmean": 0.13069370297566513
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 233,
+      "cmd_speed_mean": 5.095485376186125,
+      "cmd_speed_max": 8.633688926696777,
+      "cmd_speed_p90": 6.909767723083497,
+      "cmd_steer_absmean": 0.14555435400664038
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 181,
+      "cmd_speed_mean": 5.170328140258789,
+      "cmd_speed_max": 7.969371795654297,
+      "cmd_speed_p90": 6.838393211364746,
+      "cmd_steer_absmean": 0.12655415159562675
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 180,
+      "cmd_speed_mean": 4.923865360683865,
+      "cmd_speed_max": 7.763808250427246,
+      "cmd_speed_p90": 6.184024620056152,
+      "cmd_steer_absmean": 0.12608449202444819
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 200,
+      "cmd_speed_mean": 4.699456038475037,
+      "cmd_speed_max": 7.019411087036133,
+      "cmd_speed_p90": 5.024414157867431,
+      "cmd_steer_absmean": 0.12606567323207854
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 175,
+      "cmd_speed_mean": 4.662206726074219,
+      "cmd_speed_max": 7.071208953857422,
+      "cmd_speed_p90": 4.893413925170899,
+      "cmd_steer_absmean": 0.12387072835649762
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 151,
+      "cmd_speed_mean": 4.900932716218051,
+      "cmd_speed_max": 7.233885765075684,
+      "cmd_speed_p90": 5.808069229125977,
+      "cmd_steer_absmean": 0.13663031279251275
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 184,
+      "cmd_speed_mean": 5.375576174777487,
+      "cmd_speed_max": 9.072519302368164,
+      "cmd_speed_p90": 8.040461826324464,
+      "cmd_steer_absmean": 0.13130529127691104
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 138,
+      "cmd_speed_mean": 6.494852867679319,
+      "cmd_speed_max": 9.803482055664062,
+      "cmd_speed_p90": 8.943467330932616,
+      "cmd_steer_absmean": 0.16301439184209573
+    }
+  ],
+  "scale": 0.0
+}

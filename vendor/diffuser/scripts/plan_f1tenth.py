@@ -61,26 +61,37 @@ def env_obs_to_cond(obs, downsample, _ds_fn):
     return np.concatenate([ld, state])                                   # (downsample+5,)
 
 
-def run_episode(policy, env, downsample, ds_fn, batch_size, max_steps, log_every=500):
-    """단일 episode rollout (eval_gate.run_episode 미러, agent만 GuidedPolicy로 교체)."""
+def run_episode(policy, env, downsample, ds_fn, batch_size, max_steps, K=1, log_every=500):
+    """단일 episode rollout (eval_gate.run_episode 미러, agent만 GuidedPolicy로 교체).
+
+    K-step receding-horizon MPC: 매 재계획마다 GuidedPolicy가 생성한 plan(traj.actions[0],
+    horizon개 raw action)의 **앞 K개**를 재계획 없이 순차 실행한 뒤 다시 계획한다. K=1이면
+    기존(매 step 재계획)과 동일. K↑는 open-loop 구간을 늘려 K=1 compounding을 완화(단 너무
+    크면 open-loop blind, 014 §5-b). --dry(DummyPolicy)는 traj=None이라 K=1로 동작.
+    """
     obs = env.reset()
     lap_times, length, cause = [], 0, None
     speeds, steers = [], []   # 진단: 명령 raw speed/steer 분포(D3 점검)
-    while length < max_steps:
+    done = False
+    while length < max_steps and not done:
         cond = {0: env_obs_to_cond(obs, downsample, ds_fn)}
-        action_raw, _ = policy(cond, batch_size=batch_size, verbose=False)  # raw [steer, speed]
-        speeds.append(float(action_raw[1])); steers.append(float(action_raw[0]))
-        norm = raw_to_norm(action_raw)
-        obs, reward, done, info = env.step({"action": norm})
-        length += 1
-        lt = float(obs.get("log_lap_time_s", 0.0))
-        if lt > 0.0:
-            lap_times.append(lt)
-        if length % log_every == 0:
-            print(f"    .. step {length} laps={len(lap_times)} cmd_v={float(action_raw[1]):.1f}", flush=True)
-        if done:
-            cause = info.get("cause")
-            break
+        action_raw, traj = policy(cond, batch_size=batch_size, verbose=False)  # raw [steer, speed]
+        plan_actions = traj.actions[0] if traj is not None else [action_raw]   # (horizon,2) raw / dry 1개
+        for k in range(min(K, len(plan_actions))):
+            if length >= max_steps:
+                break
+            a_raw = plan_actions[k]
+            speeds.append(float(a_raw[1])); steers.append(float(a_raw[0]))
+            obs, reward, done, info = env.step({"action": raw_to_norm(a_raw)})
+            length += 1
+            lt = float(obs.get("log_lap_time_s", 0.0))
+            if lt > 0.0:
+                lap_times.append(lt)
+            if length % log_every == 0:
+                print(f"    .. step {length} laps={len(lap_times)} cmd_v={float(a_raw[1]):.1f}", flush=True)
+            if done:
+                cause = info.get("cause")
+                break
     return {"cause": cause, "lap_times": lap_times, "length": length,
             "cmd_speed_mean": float(np.mean(speeds)) if speeds else 0.0,
             "cmd_speed_max": float(np.max(speeds)) if speeds else 0.0,
@@ -96,14 +107,22 @@ class _DummyPolicy:
         return np.array([0.0, 8.0], dtype=np.float32), None
 
 
-def build_policy(scale, batch_size):
-    """diffusion+value load → GuidedPolicy (GPU). load_diffusion device 기본 cuda:0."""
+def build_policy(scale, batch_size, diff_subpath=None, val_subpath=None):
+    """diffusion+value load → GuidedPolicy (GPU). load_diffusion device 기본 cuda:0.
+
+    diff_subpath/val_subpath로 로드 경로 override(기본=P6 원본 그대로, 기존 동작 무변경).
+    ★ Track A complete prior 평가 = --diff_subpath diffusion/f1tenth_complete_H128_T20 +
+      프로세스 F1TENTH_MODE=complete. 후자가 필수: load_diffusion이 dataset_config로 dataset을
+      재생성(serialization.py)할 때 로더 모듈전역 F1TENTH_MODE가 반영돼 normalizer가 complete-stats로
+      재fit → complete prior와 정합. (안 주면 all-stats로 fit돼 prior 좌표계 불일치 = P6식 실패.)
+      value는 scale=0이면 로드만 되고 무효 → 기존 P6 value 재사용 가능(normalizer 불일치도 ×0 무해).
+    """
     from diffuser.utils import load_diffusion, check_compatibility
     from diffuser.sampling import n_step_guided_p_sample, GuidedPolicy, ValueGuide
 
     H, T, D = 128, 20, 0.99   # config.f1tenth (D5 정정: value discount 0.99)
-    diff_lp = f"diffusion/f1tenth_H{H}_T{T}"
-    val_lp = f"values/f1tenth_H{H}_T{T}_d{D}"
+    diff_lp = diff_subpath or f"diffusion/f1tenth_H{H}_T{T}"
+    val_lp = val_subpath or f"values/f1tenth_H{H}_T{T}_d{D}"
     print(f"[plan] load diffusion={diff_lp} value={val_lp} (cwd={os.getcwd()})", flush=True)
     diff_exp = load_diffusion("logs", "f1tenth", diff_lp, epoch="latest")
     val_exp = load_diffusion("logs", "f1tenth", val_lp, epoch="latest")
@@ -123,8 +142,14 @@ def main():
     ap.add_argument("--episodes", type=int, default=5)
     ap.add_argument("--batch_size", type=int, default=1,
                     help="GuidedPolicy는 action[0,0]만 사용 → 1로 충분(속도). 다양성 원하면↑")
-    ap.add_argument("--scale", type=float, default=0.1, help="value guidance 강도(config plan 기본)")
+    ap.add_argument("--K", type=int, default=1,
+                    help="K-step MPC: plan 앞 K개 action 순차 실행 후 재계획(1=매 step 재계획; compounding 완화는 2/3/5)")
+    ap.add_argument("--scale", type=float, default=0.1, help="value guidance 강도(config plan 기본; Track A BC=0)")
     ap.add_argument("--max_steps", type=int, default=9000, help="policy step 상한(=time_limit/action_repeat)")
+    ap.add_argument("--diff_subpath", default=None,
+                    help="diffusion 로드 경로(기본 P6 원본; Track A complete prior=diffusion/f1tenth_complete_H128_T20). "
+                         "★complete prior는 F1TENTH_MODE=complete로 실행해야 normalizer 정합.")
+    ap.add_argument("--val_subpath", default=None, help="value 로드 경로(기본 P6 value; scale=0이면 무효)")
     ap.add_argument("--out", default="/tmp/p5_eval.json")
     ap.add_argument("--dry", action="store_true", help="모델 미로드 + 더미정책으로 env/변환 CPU 스모크")
     args = ap.parse_args()
@@ -134,7 +159,8 @@ def main():
     from dreamer import make_env
     downsample = int(os.environ.get("F1TENTH_LIDAR_DOWNSAMPLE", "128"))
 
-    policy = _DummyPolicy() if args.dry else build_policy(args.scale, args.batch_size)
+    policy = _DummyPolicy() if args.dry else build_policy(
+        args.scale, args.batch_size, args.diff_subpath, args.val_subpath)
 
     cfg = build_config("f1tenth_Oschersleben")          # device cpu, v_max 20
     assert abs(cfg.v_max - 20.0) < 1e-6, f"★ eval env v_max must be 20 (S4), got {cfg.v_max}"
@@ -145,7 +171,7 @@ def main():
     for i in range(n):
         try:
             res = run_episode(policy, env, downsample, _downsample_lidar,
-                              args.batch_size, args.max_steps if not args.dry else 12)
+                              args.batch_size, args.max_steps if not args.dry else 12, K=args.K)
         except Exception as e:
             import traceback
             traceback.print_exc()

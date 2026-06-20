@@ -29,6 +29,16 @@ DEFAULT_DATA_DIR = os.environ.get(
     'F1TENTH_DATA_DIR', '/home/dlacksdn/f1tenth_RL_project/runs/crash_data')
 DEFAULT_DOWNSAMPLE = int(os.environ.get('F1TENTH_LIDAR_DOWNSAMPLE', '128'))
 
+# ── 데이터셋 모드 (Track A/B 분리, plan_new/011) ───────────────────────────────
+#   all      : 전체 데이터(완주+충돌) = 기본(기존 동작, value 학습/P6와 동일)
+#   complete : 완주 ep만(is_terminal 전무, cap5+cap10) = Track A 주행 prior(BC)
+#   cap10    : cap10_full 완주 ep만(순수 56s 모드) = cap5 혼합 제거(mixture-averaging 회피)
+#   driving  : 완주 + 충돌데이터서 lap-1 truncate한 고속랩 = Track B (미구현, 착수 시)
+# F1TENTH_CAP10_WEIGHT: complete 모드서 cap10_full(56s 완주) ep를 N배 oversample
+#   (cap5/cap10 속도모드 혼합평균 회피, 010 §2; 1=균등).
+F1TENTH_MODE = os.environ.get('F1TENTH_MODE', 'all').lower()
+F1TENTH_CAP10_WEIGHT = int(os.environ.get('F1TENTH_CAP10_WEIGHT', '1'))
+
 # action 물리 상수 (f1tenth_env.py:35-36 SSOT, 조사 A 확정). NormalizeActions 역식용.
 # action[0]=steer(rad), action[1]=speed(m/s). steer/V_MIN은 tier 무관 고정, v_max만 tier별.
 S_MIN, S_MAX = -0.4189, 0.4189   # steering rad
@@ -100,15 +110,40 @@ def _denormalize_action(action, v_max):
     return raw
 
 
+def _is_complete(is_terminal):
+    """완주 ep = 충돌(terminal) 프레임이 하나도 없음(로더 계약: 완주=non-terminal, 010 §2)."""
+    return not np.asarray(is_terminal, dtype=bool).any()
+
+
+def _ep_weight(fpath):
+    """complete 모드서 cap10_full(56s 완주) ep를 N배 oversample(혼합평균 회피). 그 외 1."""
+    if (F1TENTH_MODE == 'complete' and F1TENTH_CAP10_WEIGHT > 1
+            and os.path.basename(os.path.dirname(fpath)) == 'cap10_full'):
+        return F1TENTH_CAP10_WEIGHT
+    return 1
+
+
 def f1tenth_sequence_dataset(env, preprocess_fn=None):
-    """npz → 에피소드 dict iterator (d4rl.sequence_dataset 계약 미러)."""
+    """npz → 에피소드 dict iterator (d4rl.sequence_dataset 계약 미러).
+
+    F1TENTH_MODE='complete'면 완주 ep만 yield(Track A 주행 prior). cap10 가중 시
+    cap10_full ep를 F1TENTH_CAP10_WEIGHT회 반복 yield. 'all'(기본)은 전체.
+    """
     downsample = getattr(env, 'downsample', DEFAULT_DOWNSAMPLE)
     data_dir = getattr(env, 'data_dir', DEFAULT_DATA_DIR)
+    if F1TENTH_MODE == 'driving':
+        raise NotImplementedError(
+            "F1TENTH_MODE='driving'(완주+lap-1 추출 고속랩)은 Track B 착수 시 구현 예정.")
     for f in _npz_files(data_dir):
         d = np.load(f)
+        is_terminal = d['is_terminal'].astype(bool)
+        if F1TENTH_MODE == 'complete' and not _is_complete(is_terminal):
+            continue   # 충돌 ep 제외(완주 prior)
+        if F1TENTH_MODE == 'cap10' and (
+                os.path.basename(os.path.dirname(f)) != 'cap10_full' or not _is_complete(is_terminal)):
+            continue   # cap10_full 완주만(순수 56s, cap5 제외)
         lidar = _downsample_lidar(d['lidar'].astype(np.float32), downsample)
         state = d['state'].astype(np.float32)
-        is_terminal = d['is_terminal'].astype(bool)
         is_last = d['is_last'].astype(bool)
         v_max = d['v_max'] if 'v_max' in d.files else np.full(len(d['action']), 20.0, np.float32)
         episode = {
@@ -120,12 +155,28 @@ def f1tenth_sequence_dataset(env, preprocess_fn=None):
         }
         if preprocess_fn is not None:
             episode = preprocess_fn(episode)
-        yield episode
+        for _ in range(_ep_weight(f)):
+            yield episode
 
 
 def _auto_max_n_episodes(env):
-    """ReplayBuffer 사전할당이 (max_n_episodes×max_path_length×dim)이라 실제 ep 수로 한정."""
-    return len(_npz_files(_resolve_data_dir(env))) + 10
+    """ReplayBuffer 사전할당 = max_n_episodes×max_path_length×dim. 모드/가중 반영한 실제 ep 수.
+
+    complete 모드는 완주 ep만(+cap10 가중) 세어 사전할당을 과대하지 않게 한다.
+    iterator가 실제로 yield하는 ep 수와 정확히 일치해야 함(부족하면 buffer overflow).
+    """
+    files = _npz_files(_resolve_data_dir(env))
+    if F1TENTH_MODE not in ('complete', 'cap10'):
+        return len(files) + 10
+    n = 0
+    for f in files:
+        term = np.load(f)['is_terminal']
+        if F1TENTH_MODE == 'cap10':
+            if os.path.basename(os.path.dirname(f)) == 'cap10_full' and _is_complete(term):
+                n += 1
+        elif _is_complete(term):
+            n += _ep_weight(f)
+    return n + 10
 
 
 class F1tenthSequenceDataset(SequenceDataset):
