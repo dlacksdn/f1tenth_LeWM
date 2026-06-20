@@ -65,9 +65,11 @@ def run_episode(policy, env, downsample, ds_fn, batch_size, max_steps, log_every
     """단일 episode rollout (eval_gate.run_episode 미러, agent만 GuidedPolicy로 교체)."""
     obs = env.reset()
     lap_times, length, cause = [], 0, None
+    speeds, steers = [], []   # 진단: 명령 raw speed/steer 분포(D3 점검)
     while length < max_steps:
         cond = {0: env_obs_to_cond(obs, downsample, ds_fn)}
         action_raw, _ = policy(cond, batch_size=batch_size, verbose=False)  # raw [steer, speed]
+        speeds.append(float(action_raw[1])); steers.append(float(action_raw[0]))
         norm = raw_to_norm(action_raw)
         obs, reward, done, info = env.step({"action": norm})
         length += 1
@@ -75,11 +77,15 @@ def run_episode(policy, env, downsample, ds_fn, batch_size, max_steps, log_every
         if lt > 0.0:
             lap_times.append(lt)
         if length % log_every == 0:
-            print(f"    .. step {length} laps={len(lap_times)} v={float(obs['state'][4]):.2f}", flush=True)
+            print(f"    .. step {length} laps={len(lap_times)} cmd_v={float(action_raw[1]):.1f}", flush=True)
         if done:
             cause = info.get("cause")
             break
-    return {"cause": cause, "lap_times": lap_times, "length": length}
+    return {"cause": cause, "lap_times": lap_times, "length": length,
+            "cmd_speed_mean": float(np.mean(speeds)) if speeds else 0.0,
+            "cmd_speed_max": float(np.max(speeds)) if speeds else 0.0,
+            "cmd_speed_p90": float(np.percentile(speeds, 90)) if speeds else 0.0,
+            "cmd_steer_absmean": float(np.mean(np.abs(steers))) if steers else 0.0}
 
 
 class _DummyPolicy:
@@ -147,7 +153,9 @@ def main():
         episodes.append(res)
         two_lap = sum(res["lap_times"]) if is_completed(res["cause"]) and len(res["lap_times"]) >= 2 else None
         print(f"[plan] ep{i+1}/{n} cause={res['cause']} laps={[round(t,2) for t in res['lap_times']]} "
-              f"2lap={two_lap} len={res['length']}", flush=True)
+              f"2lap={two_lap} len={res['length']} cmd_v(mean/p90/max)="
+              f"{res.get('cmd_speed_mean',0):.1f}/{res.get('cmd_speed_p90',0):.1f}/{res.get('cmd_speed_max',0):.1f} "
+              f"steer|{res.get('cmd_steer_absmean',0):.3f}|", flush=True)
     env.close()
 
     completed = [e for e in episodes if is_completed(e["cause"])]
