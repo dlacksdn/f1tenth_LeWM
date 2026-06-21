@@ -145,6 +145,9 @@ def f1tenth_sequence_dataset(env, preprocess_fn=None):
         if F1TENTH_MODE == 'cap5' and (
                 os.path.basename(os.path.dirname(f)) != 'cap5_full' or not _is_complete(is_terminal)):
             continue   # cap5_full 완주만(저속 마진주행, 마진가설 검증 — cap10 패턴 복제, plan_new/014)
+        if F1TENTH_MODE == 'cap8' and (
+                os.path.basename(os.path.dirname(f)) != 'cap8_jitter' or not _is_complete(is_terminal)):
+            continue   # cap8_jitter 완주만(v_max8 마진 + 시작점 다양화 복구 covariate, plan_new/018)
         lidar = _downsample_lidar(d['lidar'].astype(np.float32), downsample)
         state = d['state'].astype(np.float32)
         is_last = d['is_last'].astype(bool)
@@ -169,7 +172,7 @@ def _auto_max_n_episodes(env):
     iterator가 실제로 yield하는 ep 수와 정확히 일치해야 함(부족하면 buffer overflow).
     """
     files = _npz_files(_resolve_data_dir(env))
-    if F1TENTH_MODE not in ('complete', 'cap10', 'cap5'):
+    if F1TENTH_MODE not in ('complete', 'cap10', 'cap5', 'cap8'):
         return len(files) + 10
     n = 0
     for f in files:
@@ -179,6 +182,9 @@ def _auto_max_n_episodes(env):
                 n += 1
         elif F1TENTH_MODE == 'cap5':
             if os.path.basename(os.path.dirname(f)) == 'cap5_full' and _is_complete(term):
+                n += 1
+        elif F1TENTH_MODE == 'cap8':
+            if os.path.basename(os.path.dirname(f)) == 'cap8_jitter' and _is_complete(term):
                 n += 1
         elif _is_complete(term):
             n += _ep_weight(f)

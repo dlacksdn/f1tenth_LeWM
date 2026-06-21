@@ -61,17 +61,22 @@ def env_obs_to_cond(obs, downsample, _ds_fn):
     return np.concatenate([ld, state])                                   # (downsample+5,)
 
 
-def run_episode(policy, env, downsample, ds_fn, batch_size, max_steps, K=1, log_every=500):
+def run_episode(policy, env, downsample, ds_fn, batch_size, max_steps, K=1, log_every=500,
+                dump_traj=False):
     """단일 episode rollout (eval_gate.run_episode 미러, agent만 GuidedPolicy로 교체).
 
     K-step receding-horizon MPC: 매 재계획마다 GuidedPolicy가 생성한 plan(traj.actions[0],
     horizon개 raw action)의 **앞 K개**를 재계획 없이 순차 실행한 뒤 다시 계획한다. K=1이면
     기존(매 step 재계획)과 동일. K↑는 open-loop 구간을 늘려 K=1 compounding을 완화(단 너무
     크면 open-loop blind, 014 §5-b). --dry(DummyPolicy)는 traj=None이라 K=1로 동작.
+
+    dump_traj=True면 step별 [length, cmd_v, cmd_steer, front_lidar_min]을 기록(017 §4 0a:
+    즉발붕괴 vs 점진실패 진단용). front = 정면 ±30°(빔 420:660) 정규화 lidar 최소값(0=벽근접).
     """
     obs = env.reset()
     lap_times, length, cause = [], 0, None
     speeds, steers = [], []   # 진단: 명령 raw speed/steer 분포(D3 점검)
+    traj_dump = []            # 0a: per-step [length, cmd_v, cmd_steer, front_min]
     done = False
     while length < max_steps and not done:
         cond = {0: env_obs_to_cond(obs, downsample, ds_fn)}
@@ -84,6 +89,10 @@ def run_episode(policy, env, downsample, ds_fn, batch_size, max_steps, K=1, log_
             speeds.append(float(a_raw[1])); steers.append(float(a_raw[0]))
             obs, reward, done, info = env.step({"action": raw_to_norm(a_raw)})
             length += 1
+            if dump_traj:
+                _ld = np.asarray(obs["lidar"], dtype=np.float32).reshape(-1)
+                traj_dump.append([length, float(a_raw[1]), float(a_raw[0]),
+                                  float(_ld[420:660].min())])
             lt = float(obs.get("log_lap_time_s", 0.0))
             if lt > 0.0:
                 lap_times.append(lt)
@@ -96,7 +105,8 @@ def run_episode(policy, env, downsample, ds_fn, batch_size, max_steps, K=1, log_
             "cmd_speed_mean": float(np.mean(speeds)) if speeds else 0.0,
             "cmd_speed_max": float(np.max(speeds)) if speeds else 0.0,
             "cmd_speed_p90": float(np.percentile(speeds, 90)) if speeds else 0.0,
-            "cmd_steer_absmean": float(np.mean(np.abs(steers))) if steers else 0.0}
+            "cmd_steer_absmean": float(np.mean(np.abs(steers))) if steers else 0.0,
+            "traj": traj_dump if dump_traj else None}
 
 
 class _DummyPolicy:
@@ -128,7 +138,18 @@ def build_policy(scale, batch_size, diff_subpath=None, val_subpath=None):
     val_exp = load_diffusion("logs", "f1tenth", val_lp, epoch="latest")
     check_compatibility(diff_exp, val_exp)
     print(f"[plan] diffusion epoch={diff_exp.epoch} value epoch={val_exp.epoch}", flush=True)
-    guide = ValueGuide(val_exp.ema)
+    # ★ BC(scale=0): value forward 자체를 우회(017 0b fix). value 호출은 scale=0이어도
+    #   grad×0 전에 forward를 타므로 prior·value의 obs 차원이 다르면(256 prior + 128 P6 value)
+    #   차원 충돌. n_guide_steps=0은 functions.py:35의 y 미정의(UnboundLocal) 유발 → 대신
+    #   (y=0, grad=0) 더미 guide로 value 모델 호출을 없앤다(코어 무변경, BC라 결과는 순수 prior).
+    if scale == 0:
+        import torch
+        class _ZeroGuide:
+            def gradients(self, x, *args):
+                return torch.zeros(x.shape[0], device=x.device), torch.zeros_like(x)
+        guide = _ZeroGuide()
+    else:
+        guide = ValueGuide(val_exp.ema)
     policy = GuidedPolicy(
         guide=guide, diffusion_model=diff_exp.ema, normalizer=diff_exp.dataset.normalizer,
         preprocess_fns=[], sample_fn=n_step_guided_p_sample,
@@ -151,6 +172,8 @@ def main():
                          "★complete prior는 F1TENTH_MODE=complete로 실행해야 normalizer 정합.")
     ap.add_argument("--val_subpath", default=None, help="value 로드 경로(기본 P6 value; scale=0이면 무효)")
     ap.add_argument("--out", default="/tmp/p5_eval.json")
+    ap.add_argument("--dump_traj", action="store_true",
+                    help="0a(017): step별 cmd_v/cmd_steer/front_lidar 덤프(즉발붕괴 vs 점진실패 진단)")
     ap.add_argument("--dry", action="store_true", help="모델 미로드 + 더미정책으로 env/변환 CPU 스모크")
     args = ap.parse_args()
 
@@ -171,7 +194,8 @@ def main():
     for i in range(n):
         try:
             res = run_episode(policy, env, downsample, _downsample_lidar,
-                              args.batch_size, args.max_steps if not args.dry else 12, K=args.K)
+                              args.batch_size, args.max_steps if not args.dry else 12, K=args.K,
+                              dump_traj=args.dump_traj)
         except Exception as e:
             import traceback
             traceback.print_exc()

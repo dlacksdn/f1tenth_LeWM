@@ -1,0 +1,64 @@
+{
+  "agg": {
+    "n": 5,
+    "n_completed": 0,
+    "completion_rate": 0.0,
+    "two_lap_best": null,
+    "two_lap_median": null,
+    "baseline_2lap": 107.16,
+    "beats_baseline": false
+  },
+  "episodes": [
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 126,
+      "cmd_speed_mean": 9.282006354559035,
+      "cmd_speed_max": 9.58232307434082,
+      "cmd_speed_p90": 9.452735900878906,
+      "cmd_steer_absmean": 0.2651927667477774,
+      "traj": null
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 158,
+      "cmd_speed_mean": 9.247081623801702,
+      "cmd_speed_max": 9.582555770874023,
+      "cmd_speed_p90": 9.430715179443359,
+      "cmd_steer_absmean": 0.24684720939096017,
+      "traj": null
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 127,
+      "cmd_speed_mean": 9.302757428387018,
+      "cmd_speed_max": 9.565679550170898,
+      "cmd_speed_p90": 9.496925735473633,
+      "cmd_steer_absmean": 0.24168643942029458,
+      "traj": null
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 112,
+      "cmd_speed_mean": 9.293814097132001,
+      "cmd_speed_max": 9.914102554321289,
+      "cmd_speed_p90": 9.478618049621582,
+      "cmd_steer_absmean": 0.23371004738977977,
+      "traj": null
+    },
+    {
+      "cause": "collision",
+      "lap_times": [],
+      "length": 128,
+      "cmd_speed_mean": 9.299729108810425,
+      "cmd_speed_max": 9.543607711791992,
+      "cmd_speed_p90": 9.466108703613282,
+      "cmd_steer_absmean": 0.2473721052519977,
+      "traj": null
+    }
+  ],
+  "scale": 0.0
+}

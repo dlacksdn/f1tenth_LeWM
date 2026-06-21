@@ -1,0 +1,148 @@
+[ utils/colab ] Warning: not importing colab dependencies
+[plan] load diffusion=diffusion/f1tenth_cap10_256_H128_T20 value=values/f1tenth_H128_T20_d0.99 (cwd=/home/dlacksdn/f1tenth_planning_with_diffusion/vendor/diffuser)
+[ utils/serialization ] Loaded config from logs/f1tenth/diffusion/f1tenth_cap10_256_H128_T20/dataset_config.pkl
+
+[utils/config ] Config: <class 'diffuser.datasets.f1tenth.F1tenthSequenceDataset'>
+    env: f1tenth
+    horizon: 128
+    max_path_length: 5839
+    normalizer: SafeLimitsNormalizer
+    preprocess_fns: []
+    use_padding: True
+
+[ utils/serialization ] Loaded config from logs/f1tenth/diffusion/f1tenth_cap10_256_H128_T20/render_config.pkl
+
+[utils/config ] Config: <class 'diffuser.utils.null_renderer.NullRenderer'>
+    env: f1tenth
+
+[ utils/serialization ] Loaded config from logs/f1tenth/diffusion/f1tenth_cap10_256_H128_T20/model_config.pkl
+
+[utils/config ] Config: <class 'diffuser.models.temporal.TemporalUnet'>
+    attention: False
+    cond_dim: 261
+    dim_mults: (1, 4, 8)
+    horizon: 128
+    transition_dim: 263
+
+[ utils/serialization ] Loaded config from logs/f1tenth/diffusion/f1tenth_cap10_256_H128_T20/diffusion_config.pkl
+
+[utils/config ] Config: <class 'diffuser.models.diffusion.GaussianDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: True
+    horizon: 128
+    loss_discount: 1
+    loss_type: l2
+    loss_weights: None
+    n_timesteps: 20
+    observation_dim: 261
+    predict_epsilon: False
+
+[ utils/serialization ] Loaded config from logs/f1tenth/diffusion/f1tenth_cap10_256_H128_T20/trainer_config.pkl
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    bucket: None
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    label_freq: 2000
+    n_reference: 8
+    results_folder: logs/f1tenth/diffusion/f1tenth_cap10_256_H128_T20
+    sample_freq: 0
+    save_freq: 2000
+    save_parallel: False
+    train_batch_size: 32
+    train_lr: 0.0002
+
+[ datasets/buffer ] Finalized replay buffer | 30 episodes
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (30, 5839, 261)
+    actions: (30, 5839, 2)
+    rewards: (30, 5839, 1)
+    terminals: (30, 5839, 1)
+    timeouts: (30, 5839, 1)
+    normed_observations: (30, 5839, 261)
+    normed_actions: (30, 5839, 2)
+[ models/temporal ] Channel dimensions: [(263, 32), (32, 128), (128, 256)]
+[(263, 32), (32, 128), (128, 256)]
+
+[ utils/serialization ] Loading model epoch: 8000
+
+[ utils/serialization ] Loaded config from logs/f1tenth/values/f1tenth_H128_T20_d0.99/dataset_config.pkl
+
+[utils/config ] Config: <class 'diffuser.datasets.f1tenth.F1tenthValueDataset'>
+    discount: 0.99
+    env: f1tenth
+    horizon: 128
+    max_path_length: 5839
+    normalizer: SafeLimitsNormalizer
+    normed: True
+    preprocess_fns: []
+    termination_penalty: None
+    use_padding: True
+
+[ utils/serialization ] Loaded config from logs/f1tenth/values/f1tenth_H128_T20_d0.99/render_config.pkl
+
+[utils/config ] Config: <class 'diffuser.utils.null_renderer.NullRenderer'>
+    env: f1tenth
+
+[ utils/serialization ] Loaded config from logs/f1tenth/values/f1tenth_H128_T20_d0.99/model_config.pkl
+
+[utils/config ] Config: <class 'diffuser.models.temporal.ValueFunction'>
+    cond_dim: 133
+    dim_mults: (1, 4, 8)
+    horizon: 128
+    transition_dim: 135
+
+[ utils/serialization ] Loaded config from logs/f1tenth/values/f1tenth_H128_T20_d0.99/diffusion_config.pkl
+
+[utils/config ] Config: <class 'diffuser.models.diffusion.ValueDiffusion'>
+    action_dim: 2
+    horizon: 128
+    loss_type: value_l2
+    n_timesteps: 20
+    observation_dim: 133
+
+[ utils/serialization ] Loaded config from logs/f1tenth/values/f1tenth_H128_T20_d0.99/trainer_config.pkl
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    bucket: None
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    label_freq: 20000
+    n_reference: 8
+    results_folder: logs/f1tenth/values/f1tenth_H128_T20_d0.99
+    sample_freq: 0
+    save_freq: 1000
+    save_parallel: False
+    train_batch_size: 32
+    train_lr: 0.0002
+
+[ datasets/buffer ] Finalized replay buffer | 30 episodes
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (30, 5839, 261)
+    actions: (30, 5839, 2)
+    rewards: (30, 5839, 1)
+    terminals: (30, 5839, 1)
+    timeouts: (30, 5839, 1)
+    normed_observations: (30, 5839, 261)
+    normed_actions: (30, 5839, 2)
+[ datasets/sequence ] Getting value dataset bounds... ✓
+[(135, 32), (32, 128), (128, 256)]
+
+[ utils/serialization ] Loading model epoch: 80000
+
+[plan] diffusion epoch=8000 value epoch=80000
+[plan] ep1/5 cause=collision laps=[] 2lap=None len=126 cmd_v(mean/p90/max)=9.3/9.5/9.6 steer|0.265|
+[plan] ep2/5 cause=collision laps=[] 2lap=None len=158 cmd_v(mean/p90/max)=9.2/9.4/9.6 steer|0.247|
+[plan] ep3/5 cause=collision laps=[] 2lap=None len=127 cmd_v(mean/p90/max)=9.3/9.5/9.6 steer|0.242|
+[plan] ep4/5 cause=collision laps=[] 2lap=None len=112 cmd_v(mean/p90/max)=9.3/9.5/9.9 steer|0.234|
+[plan] ep5/5 cause=collision laps=[] 2lap=None len=128 cmd_v(mean/p90/max)=9.3/9.5/9.5 steer|0.247|
+[plan] AGG {"n": 5, "n_completed": 0, "completion_rate": 0.0, "two_lap_best": null, "two_lap_median": null, "baseline_2lap": 107.16, "beats_baseline": false}
+[plan] saved /home/dlacksdn/f1tenth_planning_with_diffusion/run_logs/cap10_256_bc_K1.json
+PLAN_F1TENTH_DONE
+/home/dlacksdn/f1tenth_planning_with_diffusion/vendor/diffuser/diffuser/utils/training.py:157: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  data = torch.load(loadpath)

@@ -1,0 +1,186 @@
+[ utils/colab ] Warning: not importing colab dependencies
+[ utils/setup ] Reading config: config.f1tenth:f1tenth
+[ utils/setup ] Not using overrides | config: config.f1tenth | dataset: f1tenth
+[ utils/setup ] Found extras: ['--prefix', 'diffusion/f1tenth_cap8_256', '--n_train_steps', '20000', '--save_freq', '2000', '--n_saves', '10']
+[ utils/setup ] Overriding config | prefix : diffusion/f1tenth --> diffusion/f1tenth_cap8_256
+[ utils/setup ] Overriding config | n_train_steps : 1000000.0 --> 20000
+[ utils/setup ] Overriding config | save_freq : 2000 --> 2000
+[ utils/setup ] Overriding config | n_saves : 20 --> 10
+[ utils/setup ] Setting exp_name to: diffusion/f1tenth_cap8_256_H128_T20
+[ utils/setup ] Made savepath: logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20
+[ utils/setup ] Saved args to logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/args.json
+[ utils/config ] Imported diffuser.datasets:F1tenthSequenceDataset
+
+[utils/config ] Config: <class 'diffuser.datasets.f1tenth.F1tenthSequenceDataset'>
+    env: f1tenth
+    horizon: 128
+    max_path_length: 5839
+    normalizer: SafeLimitsNormalizer
+    preprocess_fns: []
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/dataset_config.pkl
+
+[ utils/config ] Imported diffuser.utils:NullRenderer
+
+[utils/config ] Config: <class 'diffuser.utils.null_renderer.NullRenderer'>
+    env: f1tenth
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/render_config.pkl
+
+[ datasets/buffer ] Finalized replay buffer | 26 episodes
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (26, 5839, 261)
+    actions: (26, 5839, 2)
+    rewards: (26, 5839, 1)
+    terminals: (26, 5839, 1)
+    timeouts: (26, 5839, 1)
+    normed_observations: (26, 5839, 261)
+    normed_actions: (26, 5839, 2)
+[ utils/config ] Imported diffuser.models:TemporalUnet
+
+[utils/config ] Config: <class 'diffuser.models.temporal.TemporalUnet'>
+    attention: False
+    cond_dim: 261
+    dim_mults: (1, 4, 8)
+    horizon: 128
+    transition_dim: 263
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/model_config.pkl
+
+[ utils/config ] Imported diffuser.models:GaussianDiffusion
+
+[utils/config ] Config: <class 'diffuser.models.diffusion.GaussianDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: True
+    horizon: 128
+    loss_discount: 1
+    loss_type: l2
+    loss_weights: None
+    n_timesteps: 20
+    observation_dim: 261
+    predict_epsilon: False
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/diffusion_config.pkl
+
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    bucket: None
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    label_freq: 2000
+    n_reference: 8
+    results_folder: logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20
+    sample_freq: 0
+    save_freq: 2000
+    save_parallel: False
+    train_batch_size: 32
+    train_lr: 0.0002
+
+[ utils/config ] Saved config to: logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/trainer_config.pkl
+
+[ models/temporal ] Channel dimensions: [(263, 32), (32, 128), (128, 256)]
+[(263, 32), (32, 128), (128, 256)]
+[ utils/arrays ] Total parameters: 3.74 M
+         downs.2.0.blocks.1.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         downs.2.1.blocks.0.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         downs.2.1.blocks.1.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         ups.0.0.blocks.0.block.0.weight: 327.68 k | Conv1d(512, 128, kernel_size=(5,), stride=(1,), padding=(2,))
+         mid_block1.blocks.0.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         mid_block1.blocks.1.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         mid_block2.blocks.0.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         mid_block2.blocks.1.block.0.weight: 327.68 k | Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         downs.2.0.blocks.0.block.0.weight: 163.84 k | Conv1d(128, 256, kernel_size=(5,), stride=(1,), padding=(2,))
+         downs.1.0.blocks.1.block.0.weight: 81.92 k | Conv1d(128, 128, kernel_size=(5,), stride=(1,), padding=(2,))
+         ... and 138 others accounting for 872.74 k parameters
+Testing forward... ✓
+Epoch 0 / 2 | logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20
+[ utils/training ] Saved model to logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/state_0.pt
+0:   0.3468 | a0_loss:   0.0469 | t:   0.8843
+100:   0.1332 | a0_loss:   0.0227 | t:  45.4971
+200:   0.0643 | a0_loss:   0.0215 | t:  45.8444
+300:   0.0392 | a0_loss:   0.0254 | t:  45.7758
+400:   0.0255 | a0_loss:   0.0235 | t:  44.8519
+500:   0.0161 | a0_loss:   0.0193 | t:  45.2341
+600:   0.0272 | a0_loss:   0.0206 | t:  45.3284
+700:   0.0170 | a0_loss:   0.0137 | t:  45.1026
+800:   0.0196 | a0_loss:   0.0177 | t:  45.1380
+900:   0.0113 | a0_loss:   0.0200 | t:  44.8361
+1000:   0.0103 | a0_loss:   0.0148 | t:  45.0850
+1100:   0.0121 | a0_loss:   0.0172 | t:  44.7259
+1200:   0.0094 | a0_loss:   0.0171 | t:  44.6844
+1300:   0.0107 | a0_loss:   0.0184 | t:  44.8938
+1400:   0.0128 | a0_loss:   0.0162 | t:  45.1931
+1500:   0.0145 | a0_loss:   0.0157 | t:  45.3403
+1600:   0.0142 | a0_loss:   0.0129 | t:  46.3083
+1700:   0.0121 | a0_loss:   0.0140 | t:  45.9590
+1800:   0.0093 | a0_loss:   0.0113 | t:  46.4667
+1900:   0.0075 | a0_loss:   0.0120 | t:  46.1096
+[ utils/training ] Saved model to logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/state_2000.pt
+2000:   0.0109 | a0_loss:   0.0110 | t:  45.0977
+2100:   0.0070 | a0_loss:   0.0132 | t:  45.0800
+2200:   0.0076 | a0_loss:   0.0151 | t:  45.5527
+2300:   0.0072 | a0_loss:   0.0145 | t:  45.3744
+2400:   0.0085 | a0_loss:   0.0109 | t:  45.5471
+2500:   0.0071 | a0_loss:   0.0078 | t:  45.4481
+2600:   0.0057 | a0_loss:   0.0068 | t:  45.3061
+2700:   0.0059 | a0_loss:   0.0138 | t:  44.8591
+2800:   0.0063 | a0_loss:   0.0087 | t:  44.6486
+2900:   0.0074 | a0_loss:   0.0088 | t:  45.3788
+3000:   0.0099 | a0_loss:   0.0057 | t:  44.3433
+3100:   0.0064 | a0_loss:   0.0094 | t:  44.1290
+3200:   0.0058 | a0_loss:   0.0118 | t:  44.0612
+3300:   0.0062 | a0_loss:   0.0101 | t:  44.0381
+3400:   0.0069 | a0_loss:   0.0093 | t:  44.1351
+3500:   0.0066 | a0_loss:   0.0094 | t:  44.1597
+3600:   0.0060 | a0_loss:   0.0113 | t:  43.6985
+3700:   0.0082 | a0_loss:   0.0077 | t:  43.7079
+3800:   0.0040 | a0_loss:   0.0065 | t:  43.8944
+3900:   0.0058 | a0_loss:   0.0078 | t:  43.9767
+[ utils/training ] Saved model to logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/state_4000.pt
+4000:   0.0058 | a0_loss:   0.0073 | t:  43.6989
+4100:   0.0051 | a0_loss:   0.0084 | t:  43.6410
+4200:   0.0038 | a0_loss:   0.0066 | t:  44.0912
+4300:   0.0081 | a0_loss:   0.0100 | t:  43.9699
+4400:   0.0063 | a0_loss:   0.0049 | t:  44.2470
+4500:   0.0052 | a0_loss:   0.0066 | t:  44.1619
+4600:   0.0044 | a0_loss:   0.0067 | t:  44.1394
+4700:   0.0044 | a0_loss:   0.0068 | t:  44.0196
+4800:   0.0046 | a0_loss:   0.0067 | t:  44.4464
+4900:   0.0052 | a0_loss:   0.0064 | t:  44.2021
+5000:   0.0094 | a0_loss:   0.0094 | t:  44.5285
+5100:   0.0059 | a0_loss:   0.0077 | t:  44.1845
+5200:   0.0068 | a0_loss:   0.0111 | t:  44.4208
+5300:   0.0037 | a0_loss:   0.0109 | t:  44.2672
+5400:   0.0055 | a0_loss:   0.0024 | t:  44.4553
+5500:   0.0046 | a0_loss:   0.0068 | t:  44.8964
+5600:   0.0064 | a0_loss:   0.0082 | t:  44.1911
+5700:   0.0048 | a0_loss:   0.0079 | t:  44.2086
+5800:   0.0046 | a0_loss:   0.0078 | t:  43.9330
+5900:   0.0036 | a0_loss:   0.0061 | t:  44.2361
+[ utils/training ] Saved model to logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/state_6000.pt
+6000:   0.0039 | a0_loss:   0.0052 | t:  44.2937
+6100:   0.0060 | a0_loss:   0.0075 | t:  44.4402
+6200:   0.0049 | a0_loss:   0.0068 | t:  44.1844
+6300:   0.0039 | a0_loss:   0.0038 | t:  44.0451
+6400:   0.0035 | a0_loss:   0.0067 | t:  44.3689
+6500:   0.0039 | a0_loss:   0.0050 | t:  44.3494
+6600:   0.0039 | a0_loss:   0.0058 | t:  44.2265
+6700:   0.0055 | a0_loss:   0.0050 | t:  44.1691
+6800:   0.0043 | a0_loss:   0.0056 | t:  44.3627
+6900:   0.0031 | a0_loss:   0.0033 | t:  44.3122
+7000:   0.0055 | a0_loss:   0.0055 | t:  44.2483
+7100:   0.0049 | a0_loss:   0.0048 | t:  44.0518
+7200:   0.0040 | a0_loss:   0.0049 | t:  44.1449
+7300:   0.0084 | a0_loss:   0.0061 | t:  44.1094
+7400:   0.0032 | a0_loss:   0.0043 | t:  44.2895
+7500:   0.0044 | a0_loss:   0.0072 | t:  44.1983
+7600:   0.0036 | a0_loss:   0.0045 | t:  44.1423
+7700:   0.0044 | a0_loss:   0.0039 | t:  44.3562
+7800:   0.0043 | a0_loss:   0.0065 | t:  44.0989
+7900:   0.0045 | a0_loss:   0.0051 | t:  44.2490
+[ utils/training ] Saved model to logs/f1tenth/diffusion/f1tenth_cap8_256_H128_T20/state_8000.pt
+8000:   0.0020 | a0_loss:   0.0043 | t:  44.2819

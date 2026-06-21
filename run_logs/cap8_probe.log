@@ -1,0 +1,48 @@
+[collect] task=f1tenth_Oschersleben ckpt=/home/dlacksdn/f1tenth_RL_project/runs/cap10_oschersleben/step_45k.pt v_max=8.0 episodes=20 out=/home/dlacksdn/f1tenth_RL_project/runs/crash_data/cap8_probe
+[collect] eval_state_mean=False device=cpu envs=1 parallel=False (stochastic latent+action)
+[collect] save_complete=True max_env_steps=None time_limit=18000
+Encoder CNN shapes: {}
+Encoder LIDAR shapes: {'lidar': (1080,)}
+Encoder MLP shapes: {'state': (5,)}
+Decoder CNN shapes: {}
+Decoder LIDAR shapes: {'lidar': (1080,)}
+Decoder MLP shapes: {'state': (5,)}
+Optimizer model_opt has 11689126 variables.
+Optimizer actor_opt has 460804 variables.
+Optimizer value_opt has 525311 variables.
+[eval_gate] state_dict load: missing=0 unexpected=0 (partial snapshot이면 value/_slow_value 등 missing 정상)
+[collect] ep 1/20: cause=collision len=1932 saved=True (collision=1 complete=0)
+[collect] ep 2/20: cause=collision len=738 saved=True (collision=2 complete=0)
+[collect] ep 3/20: cause=collision len=951 saved=True (collision=3 complete=0)
+[collect] ep 4/20: cause=collision len=232 saved=True (collision=4 complete=0)
+[collect] ep 5/20: cause=collision len=731 saved=True (collision=5 complete=0)
+[collect] ep 6/20: cause=lap_complete len=3451 saved=True (collision=5 complete=1)
+[collect] ep 7/20: cause=collision len=229 saved=True (collision=6 complete=1)
+[collect] ep 8/20: cause=collision len=952 saved=True (collision=7 complete=1)
+[collect] ep 9/20: cause=collision len=735 saved=True (collision=8 complete=1)
+[collect] ep 10/20: cause=collision len=741 saved=True (collision=9 complete=1)
+[collect] ep 11/20: cause=lap_complete len=3473 saved=True (collision=9 complete=2)
+[collect] ep 12/20: cause=collision len=684 saved=True (collision=10 complete=2)
+[collect] ep 13/20: cause=collision len=742 saved=True (collision=11 complete=2)
+[collect] ep 14/20: cause=collision len=231 saved=True (collision=12 complete=2)
+[collect] ep 15/20: cause=collision len=2484 saved=True (collision=13 complete=2)
+[collect] ep 16/20: cause=collision len=1025 saved=True (collision=14 complete=2)
+[collect] ep 17/20: cause=collision len=285 saved=True (collision=15 complete=2)
+[collect] ep 18/20: cause=collision len=496 saved=True (collision=16 complete=2)
+[collect] ep 19/20: cause=collision len=480 saved=True (collision=17 complete=2)
+[collect] ep 20/20: cause=collision len=228 saved=True (collision=18 complete=2)
+
+========== collect_crash_data 결과 ==========
+시도 ep        : 20
+save_complete  : True  (max_env_steps=None)
+충돌 저장      : 18  → /home/dlacksdn/f1tenth_RL_project/runs/crash_data/cap8_probe
+완주 저장      : 2  → /home/dlacksdn/f1tenth_RL_project/runs/crash_data/cap8_probe
+총 저장        : 20
+기타 폐기      : {}
+수집률(저장)   : 1.000
+=============================================
+
+/home/dlacksdn/f1tenth_RL_project/vendor/dreamerv3-torch/tools.py:751: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  self._scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+/home/dlacksdn/f1tenth_RL_project/scripts/eval_gate.py:222: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ckpt = torch.load(str(ckpt_path), map_location="cpu")
